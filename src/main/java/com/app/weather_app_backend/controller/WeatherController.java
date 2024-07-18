@@ -19,7 +19,7 @@ import java.util.Map;
 @RequestMapping("/weather")
 public class WeatherController {
 
-    @Value("${weather.api-key}")
+    @Value("${weather.api.key}")
     private String WEATHER_API_KEY;
 
     @Autowired
