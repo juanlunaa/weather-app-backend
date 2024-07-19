@@ -1,12 +1,12 @@
 package com.app.weather_app_backend.service;
 
 import com.app.weather_app_backend.exceptions.ResourceNotFoundException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -14,15 +14,18 @@ import java.util.Map;
 public class WeatherService {
 
     @Autowired
-    private RestTemplate restTemplate;
+    private WebClient.Builder webClientBuilder;
 
-    public Map<String, Object> getWeatherApiResponse (Integer cityId, String API_KEY) {
-        try {
-            String API_URL = String.format("https://api.openweathermap.org/data/2.5/weather?id=%s&appid=%s", cityId, API_KEY);
-            String res = restTemplate.getForObject(API_URL, String.class);
-            return new JSONObject(res).toMap();
-        } catch (HttpClientErrorException.NotFound e) {
-            throw new ResourceNotFoundException("City not found");
-        }
+    public Mono<Map<String, Object>> getWeatherApiResponse (Long cityId, String API_KEY) {
+        String API_URL = String.format("https://api.openweathermap.org", cityId, API_KEY);
+        WebClient webClient = webClientBuilder.baseUrl(API_URL).build();
+
+        return webClient.get()
+                .uri("/data/2.5/weather?id={cityId}&appid={key}", cityId, API_KEY)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .onErrorResume(WebClientResponseException.NotFound.class, ex -> {
+                    throw new ResourceNotFoundException("City not found");
+                });
     }
 }
