@@ -17,7 +17,7 @@ public class WeatherService {
     private WebClient.Builder webClientBuilder;
 
     public Mono<Map<String, Object>> getWeatherApiResponse (Long cityId, String API_KEY) {
-        String API_URL = String.format("https://api.openweathermap.org", cityId, API_KEY);
+        String API_URL = "https://api.openweathermap.org";
         WebClient webClient = webClientBuilder.baseUrl(API_URL).build();
 
         return webClient.get()
